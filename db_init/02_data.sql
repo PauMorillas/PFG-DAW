@@ -70,15 +70,43 @@ INSERT INTO cliente (nombre, correo_elec, telf) VALUES
 
 -- 5. INSERTAR RESERVAS (Citas)
 -- ====================================================================
+-- Necesitamos la duración de los servicios para calcular fecha_fin
 -- Reservas para 'Corte Caballero' (id_servicio=1, duración=30min)
-INSERT INTO Reserva (fecha_inicio, estado, id_cliente, id_servicio) VALUES
-('2025-09-27 10:00:00', 'ACTIVA', 1, 1), -- Cliente Marta, 10:00 - 10:30
-('2025-09-27 10:30:00', 'ACTIVA', 2, 1); -- Cliente Alberto, 10:30 - 11:00
+-- Calculamos e insertamos manualmente fecha_fin
+INSERT INTO reserva (fecha_inicio, fecha_fin, estado, id_cliente, id_servicio) VALUES
+(
+    '2025-09-27 10:00:00', 
+    '2025-09-27 10:30:00', -- Inventado: 30 minutos después
+    'ACTIVA', 
+    1, 
+    1
+),
+(
+    '2025-09-27 10:30:00', 
+    '2025-09-27 11:00:00', -- Inventado: 30 minutos después
+    'ACTIVA', 
+    2, 
+    1
+); 
 
 -- Reserva para 'Cambio de Aceite' (id_servicio=4, duración=60min)
-INSERT INTO Reserva (fecha_inicio, estado, id_cliente, id_servicio) VALUES
-('2025-09-27 09:30:00', 'ACTIVA', 3, 4); -- Cliente Sofía, 09:30 - 10:30
+-- Calculamos e insertamos manualmente fecha_fin
+INSERT INTO reserva (fecha_inicio, fecha_fin, estado, id_cliente, id_servicio) VALUES
+(
+    '2025-09-27 09:30:00', 
+    '2025-09-27 10:30:00', -- Inventado: 60 minutos después
+    'ACTIVA', 
+    3, 
+    4
+); 
 
 -- Reserva Cancelada (para pruebas de estado)
-INSERT INTO Reserva (fecha_inicio, estado, id_cliente, id_servicio) VALUES
-('2025-09-28 11:00:00', 'CANCELADA', 1, 1);
+-- Calculamos e insertamos manualmente fecha_fin
+INSERT INTO reserva (fecha_inicio, fecha_fin, estado, id_cliente, id_servicio) VALUES
+(
+    '2025-09-28 11:00:00', 
+    '2025-09-28 11:30:00', -- Inventado: 30 minutos después
+    'CANCELADA', 
+    1, 
+    1
+);

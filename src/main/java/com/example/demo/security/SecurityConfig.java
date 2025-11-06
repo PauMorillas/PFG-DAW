@@ -1,6 +1,7 @@
 package com.example.demo.security;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -11,14 +12,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-import com.example.demo.repository.dao.DominioRepository;
+import com.example.demo.model.dto.DominioDTO;
+import com.example.demo.service.DominioService;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 	// 1. INYECTAR EL REPOSITORIO DE DOMINIOS
 	@Autowired(required = false) // Usamos required=false por si no está implementado al inicio
-	private DominioRepository  dominioRepository;
+	private DominioService dominioService;
 
 	// 1. Define el encriptador de contraseñas
 	@Bean
@@ -57,56 +59,59 @@ public class SecurityConfig {
 						// 3. Permisos generales: cualquier otra petición requiere autenticación
 						.anyRequest().authenticated())
 
-				// Configuración del formulario de login
-				.formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/home", true) // Redirecciona al home
+				// Deshabilitar formulario de login por defecto
+				.formLogin(form -> form.disable())
+				
+				// Deshabilitar logout por defecto
+				.logout(logout -> logout.disable())
+
+				/* .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/home", true) // Redirecciona al home
 																								// después del login
 																								// exitoso
-						.permitAll())
+						.permitAll()) */
 
 				// Configuración de cierre de sesión
-				.logout(logout -> logout.permitAll())
+				/* .logout(logout -> logout.permitAll()) */
 
-				// TODO: Deshabilitar CSRF para rutas específicas (como /mail/** y /public/**)
+				// Deshabilitar CSRF para rutas específicas
 				.csrf(csrf -> csrf.ignoringRequestMatchers("/mail/**", "/public/**"));
 
 		return http.build();
 	}
 
-	// Método que genera la política CSP dinámicamente o estáticamente
-	// TODO: El método buildCspPolicy debe ser modificado para usar el
-	// dominioRepository
+	// Método que genera la política CSP dinámicamente
+	// TODO: El método buildCspPolicy debe ser modificado para que consulte a la API
+	// en Laravel
 	private String buildCspPolicy() {
 
-		// --- LÓGICA DE PRODUCCIÓN REAL (para tu MEMORIA FINAL) ---
+		// --- LÓGICA DE DELEGACIÓN ---
 
+		List<DominioDTO> allowedDomains = dominioService.getDominios();
 		String allowedDomainsString = "";
 
-		// Solo intentamos consultar si el repositorio ha sido inyectado
-		if (dominioRepository != null) {
-			// Consulta la BBDD para obtener los dominios registrados por los gerentes
-			List<String> allowedDomains = dominioRepository.findAllDomains();
-			// Crea un String separando los dominios por espacio
-			allowedDomainsString = String.join(" ", allowedDomains);
+		// La lista de dominios será vacía si el servicio falló o si Laravel no tiene
+		// datos
+		if (!allowedDomains.isEmpty()) {
+			allowedDomainsString = allowedDomains.stream()
+					.map(DominioDTO::getNombre) // Esto es un method reference 
+					.collect(Collectors.joining(" ")); // Espacio como separador
 		}
 
-		// En caso de fallar la consulta, usamos 'self' para evitar errores de seguridad
-		String finalDomains = (allowedDomainsString.isEmpty() || dominioRepository == null) ? "'self'"
+		// Si la lista de dominios está vacía, solo se usa 'self' por seguridad
+		String finalDomains = allowedDomainsString.isEmpty() ? "'self'"
 				: "'self' " + allowedDomainsString;
 
-		// La directiva frame-ancestors debe incluir 'self' MÁS los dominios de clientes
+		// Directivas CSP
 		String frameAncestorsDirective = "frame-ancestors " + finalDomains + " *;";
-		// Nota: mantenemos * para la demo
-		// si la lista es vacía
-        
-		// Resto de las directivas CSP
-        String defaultSources = "default-src 'self';";
+		String defaultSources = "default-src 'self';";
 		String styleSources = "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;";
 		String scriptSources = "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;";
 		String fontSources = "font-src 'self' https://cdn.jsdelivr.net data:;";
 
-        return frameAncestorsDirective +
-               defaultSources +
-               styleSources +
-				scriptSources + fontSources;
+		return frameAncestorsDirective +
+				defaultSources +
+				styleSources +
+				scriptSources +
+				fontSources;
 	}
 }
