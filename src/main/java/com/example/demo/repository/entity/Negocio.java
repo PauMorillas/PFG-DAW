@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
 
@@ -45,11 +46,11 @@ public class Negocio {
 	private Gerente gerente;
 
 	// Relación 1:N con Servicio. Un Negocio ofrece muchos Servicios.
-	/* @OneToMany(mappedBy = "negocio", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "negocio", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Servicio> listaServicios;
 
 	public Negocio() {
 		this.gerente = new Gerente();
 		this.listaServicios = new ArrayList<Servicio>();
-	} */
+	} 
 }
